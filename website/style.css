@@ -1,0 +1,109 @@
+/* General Reset */
+body, h1, h2, h3, p, ul, ol {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    background-color: #f9f9f9;
+    color: #333;
+    padding: 20px;
+}
+
+/* Container for the entire page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styling */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+}
+
+header p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+}
+
+/* Section Styling */
+section {
+    margin-bottom: 40px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Introduction and Conclusion Styling */
+.intro, .conclusion {
+    padding: 20px;
+    border-left: 5px solid #3498db;
+    background-color: #ecf6fc;
+}
+
+.intro h2, .conclusion h2 {
+    font-size: 1.8rem;
+    color: #2980b9;
+    margin-bottom: 10px;
+}
+
+.intro p, .conclusion p {
+    font-size: 1rem;
+    color: #34495e;
+}
+
+/* Data Visualization Section */
+.visualization {
+    text-align: center;
+}
+
+.visualization h2 {
+    font-size: 1.8rem;
+    color: #27ae60;
+    margin-bottom: 20px;
+}
+
+.visualization canvas, .visualization svg {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Footer Styling */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 0.9rem;
+    color: #95a5a6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    .intro h2, .conclusion h2, .visualization h2 {
+        font-size: 1.5rem;
+    }
+}

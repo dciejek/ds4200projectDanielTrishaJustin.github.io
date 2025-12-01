@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Comparing Common Stocks to Cryptocurrencies</h1>
+            <h2 class="subtitle">Daniel, Trisha, Justin</h2>
+        </header>
+
+        <div class="intro section">
+            <h2>Introduction</h2>
+            <p>In 2009, the first form of cryptocurrency was created with "Bitcoin". Crypto assets use blockchain 
+                technology, a type of digital ledger, to record all transactions across a large network of computers. 
+                Crypto is usually 'mined' with its input resources usually being large amounts of computational power. 
+                This differs from traditional currencies such as the USD, Euro, or stock assets as crypto is disconnected 
+                from any government entity or centralized bank. These coins hold little physical value, but work similarly 
+                to traditional stocks.
+            </p>
+            <p>
+                Now in 2025, thousands of cryptocurrencies have been created, each with its own valuation and branding. 
+                Prices fluctuate throughout the day, and savvy investors may be able to capitalize at higher returns than 
+                traditional shares purchased on the NASDAQ. Our project aims to compare the 2 investments, traditional 
+                stock and the newer cryptocurrencies, and determine the pros and cons to each. We hope to examine 
+                volatility, average returns on investment, and visualize the many different types of coins and companies. 
+                We believe cryptocurrency is the future of investment, and believe the topic is extremely important with 
+                growing concerns in the U.S stock markets. 
+            </p>
+        </div>
+
+        <div class="visualization section">
+            <h2>Data Visualizations</h2>
+            <h3>Visualization 1</h3>
+                <div id="market-viz">
+                    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+                    <script type="module">
+                    import { renderMarketViz } from "./visualization.js";
+
+                    renderMarketViz("#market-viz");
+                    </script>
+                </div>
+            <h3>Visualization 2</h3>
+                <div id="market-viz">
+                    <iframe
+                        src="../python_vis/stock_daily_change.html"
+                        width="100%"
+                        height="600"
+                        style="border:none;"
+                        loading="lazy">
+                    </iframe>
+                </div>
+            <h3>Visualization 3</h3>
+                <div id="market-viz">
+                    <iframe
+                        src="../python_vis/sector_performance.html"
+                        width="100%"
+                        height="600"
+                        style="border:none;"
+                        loading="lazy">
+                    </iframe>
+                </div>
+            <h3>Visualization 4</h3>
+                <div id="market-viz">
+                    <iframe
+                        src="../python_vis/top_movers.html"
+                        width="100%"
+                        height="600"
+                        style="border:none;"
+                        loading="lazy">
+                    </iframe>
+                </div>
+            <h3>Visualization 5</h3>
+                <div id="market-viz">
+                    <iframe
+                        src="../python_vis/price_v_avg_change.html"
+                        width="100%"
+                        height="600"
+                        style="border:none;"
+                        loading="lazy">
+                    </iframe>
+                </div>
+        </div>
+
+        <div class="conclusion section">
+            <h2>Conclusion</h2>
+            <p>
+                In conclusion, our analysis of cryptocurrencies and traditional stocks reveals distinct characteristics 
+                and investment potentials for each asset class. Cryptocurrencies offer high volatility and the possibility 
+                of significant returns, appealing to risk-tolerant investors. However, they also come with regulatory 
+                uncertainties and security concerns. On the other hand, traditional stocks provide more stability and are 
+                backed by established companies, making them a safer choice for conservative investors. Our visualizations 
+                highlighted these differences, showcasing the rapid price fluctuations of cryptocurrencies compared to the 
+                steadier growth of stocks. Ultimately, the choice between investing in cryptocurrencies or traditional stocks 
+                depends on individual risk tolerance, investment goals, and market outlook.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
