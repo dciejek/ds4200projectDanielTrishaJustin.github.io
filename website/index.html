@@ -36,14 +36,19 @@
         <div class="visualization section">
             <h2>Data Visualizations</h2>
             <h3>Visualization 1</h3>
-                <div id="market-viz">
+                <div id="market-viz"></div>
+                    <div id="asset-treemap"></div>
                     <script src="https://d3js.org/d3.v7.min.js"></script>
-
-                    <script type="module">
-                    import { renderMarketViz } from "./visualization.js";
-
-                    renderMarketViz("#market-viz");
-                    </script>
+                    <script src="visualization.js"></script>
+                <div class="description">
+                    <p>
+                        This chart shows a treemap visualization comparing the market capitalization of various stocks and cryptocurrencies.
+                        Each rectangle represents an individual asset, with the size of the rectangle corresponding to its market cap.
+                        The color coding differentiates between stocks (yellow) and cryptocurrencies (pink). From the visualization,
+                        we can see that while traditional stocks dominate in terms of market capitalization, certain cryptocurrencies 
+                        like Bitcoin and Ethereum also hold significant market value. This highlights the growing importance of cryptocurrencies
+                        in the financial landscape, despite being a relatively new asset class compared to established stocks.
+                    </p>
                 </div>
             <h3>Visualization 2</h3>
                 <div id="market-viz">
@@ -55,6 +60,19 @@
                         loading="lazy">
                     </iframe>
                 </div>
+                <div class="description">
+                    <p>
+                        This visualization illustrates how the stock market behaves on a day-to-day basis by tracking the average percent 
+                        change of stock prices over time. When viewed across multiple months, the chart reveals that most daily changes remain 
+                        clustered close to zero, meaning that the market tends to move gradually rather than through extreme daily swings. The few 
+                        noticeable spikes and dips correspond to periods of unusual volatility—likely earnings releases, macroeconomic news, or shifts 
+                        in investor sentiment—which briefly disrupt the otherwise stable trend. The interactive time filters (1W, 2W, 1M, All) allow 
+                        users to zoom into shorter windows and uncover short-term patterns, such as momentum surges, brief pullbacks, or stabilization 
+                        phases. Together, these insights help contextualize how dynamic the market is, making it easier for viewers to understand whether 
+                        recent price movements are typical fluctuations or indicators of emerging trends.
+
+                    </p>
+                </div>
             <h3>Visualization 3</h3>
                 <div id="market-viz">
                     <iframe
@@ -65,15 +83,46 @@
                         loading="lazy">
                     </iframe>
                 </div>
+                <div class="description">
+                    <p>
+                        This line plot highlights the performance of stocks across different industries. It shows the average 
+                        trading price each day plotted across an entire date range. The visualization also includes all Cryptocurrencys 
+                        aggregated as a comparison line to all stocks and subsections of stock. When plotting all industries against Crypto, 
+                        results vary widely. When looking at this years data, only a single industry outperformed being Consumer Defensive stocks. 
+                        Despite success within each industry, the entire weighed average still falls below Crypto gains for most categorys. Our visualization 
+                        can break down these categorys further into subsectors. This allows for more detailed comparison and showcases a few niche sectors that 
+                        outperform Crypto greatly. Home Furnishing & Banking lead these categorys at 80-90 percent cumulative gains. Our visualization helps uncover
+                        specific market trends that show behavior across specific sector and industires, highlighting recent and long term changes. 
+
+                    </p>
+                </div>
             <h3>Visualization 4</h3>
                 <div id="market-viz">
                     <iframe
-                        src="../python_vis/top_movers.html"
+                        src="../python_vis/stock_crypto_rank_bar_april.html"
                         width="100%"
                         height="600"
                         style="border:none;"
                         loading="lazy">
                     </iframe>
+                    <iframe
+                        src="../python_vis/crypto_rank_bar_april.html"
+                        width="100%"
+                        height="600"
+                        style="border:none;"
+                        loading="lazy">
+                    </iframe>
+                </div>
+                <div class="description">
+                    <p>
+                        Across both charts, April's market behavior shows a stark divide between traditional stocks and cryptocurrencies. 
+                        The stock movers display a tight cluster of modest changes, with most companies shifting less than 1% in either 
+                        direction—highlighting the stability and predictability of the equity market during this period. In contrast, the 
+                        crypto-only chart reveals dramatic volatility, with many tokens experiencing explosive gains ranging from 30% to over 200%. 
+                        This huge spread underscores crypto's highly speculative nature and its sensitivity to short-term sentiment and momentum. Viewed 
+                        together, the visualizations emphasize how stocks and cryptocurrencies operate on entirely different volatility scales, with equities 
+                        moving gradually while crypto assets can swing wildly within the same timeframe.
+                    </p>
                 </div>
             <h3>Visualization 5</h3>
                 <div id="market-viz">
@@ -84,6 +133,19 @@
                         style="border:none;"
                         loading="lazy">
                     </iframe>
+                </div>
+                <div>
+                    <p>
+                        This bubble plot highlights the relationship between price, average percent change, and trading 
+                        volume across the most actively traded stocks and cryptocurrencies over the past 30 days. The 
+                        visualization makes the differences between the two asset classes immediately apparent: cryptocurrencies 
+                        exhibit much wider variation in both price and volatility, forming a dispersed cloud of points across the chart. 
+                        Stocks, on the other hand, cluster tightly around lower levels of average percent change, demonstrating far more 
+                        stability in their monthly performance. Larger bubbles—representing higher trading volume—help viewers pinpoint which assets 
+                        are driving market activity, showing that some extremely volatile crypto assets also receive substantial trading attention. By 
+                        combining three dimensions of data into a single chart, this visualization uncovers patterns that would be harder to detect when 
+                        viewing these variables separately, making it clear how volatility and market behavior differ dramatically between stocks and crypto.
+                    </p>
                 </div>
         </div>
 
@@ -98,6 +160,12 @@
                 highlighted these differences, showcasing the rapid price fluctuations of cryptocurrencies compared to the 
                 steadier growth of stocks. Ultimately, the choice between investing in cryptocurrencies or traditional stocks 
                 depends on individual risk tolerance, investment goals, and market outlook.
+
+                Using recent data, we also found that aggregate cryptocurrency has generally outperformed common stocks since
+                the initial tariffs in April. This confirms our hypothesis that since crypto is not a taxable good, it would
+                feel less impact from Trump's changes. We also noticed that Crypto tracks the market. It follows the general
+                flow of the S&P 500 and even closer with the technology sector. While this may be a short term
+                coincidence, the correlation is strong and suggests investors value both types of assets.
             </p>
         </div>
     </div>

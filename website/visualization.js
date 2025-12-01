@@ -1,391 +1,232 @@
-// visualization.js
-export async function renderMarketViz(containerSelector) {
-  const container = d3.select(containerSelector);
+// js/treemap.js — Stocks vs Crypto sector treemap (yellow + pink)
 
-  const width = 960;
-  const margin = { top: 50, right: 40, bottom: 40, left: 180 };
-  const panelGap = 50; // vertical gap between stocks & crypto panels
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("treemap.js loaded");
 
-  const wrapper = container.append("div")
-    .style("font-family", "system-ui, sans-serif")
-    .style("max-width", width + "px");
+  const rootSel = d3.select("#asset-treemap");
+  if (rootSel.empty()) {
+    console.error("No element with id 'asset-treemap' found.");
+    return;
+  }
 
-  // Title & subtitle
-  wrapper.append("div")
-    .style("margin-bottom", "4px")
-    .style("font-size", "18px")
-    .style("font-weight", "600")
-    .text("Average % Return per Asset — Stocks vs Crypto");
+  // Helper to safely parse numbers with commas
+  function parseNumber(v) {
+    if (v == null || v === "") return NaN;
+    return +String(v).replace(/,/g, "");
+  }
 
-  wrapper.append("div")
-    .style("margin-bottom", "12px")
-    .style("font-size", "12px")
-    .style("color", "#6b7280")
-    .html(
-      "Each bar is one asset, showing its average % change across all records. " +
-      "Top & bottom performers are shown separately for stocks (top) and crypto (bottom)."
-    );
+  const margin = { top: 40, right: 10, bottom: 10, left: 10 };
+  const width = 900 - margin.left - margin.right;
+  const height = 520 - margin.top - margin.bottom;
 
   // Tooltip
-  const tooltip = d3.select("body").append("div")
+  const tooltip = rootSel.append("div")
+    .attr("class", "treemap-tooltip")
     .style("position", "absolute")
     .style("pointer-events", "none")
-    .style("background", "rgba(17,24,39,0.97)")
-    .style("color", "#f9fafb")
-    .style("padding", "8px 10px")
-    .style("border-radius", "6px")
-    .style("font-size", "11px")
-    .style("border", "1px solid #4b5563")
-    .style("opacity", 0)
-    .style("z-index", 9999);
+    .style("background", "rgba(0,0,0,0.8)")
+    .style("color", "white")
+    .style("padding", "6px 8px")
+    .style("border-radius", "4px")
+    .style("font-size", "12px")
+    .style("opacity", 0);
 
-  const fmtPct = d3.format("+.2f");
+  const svg = rootSel.append("svg")
+    .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    .style("max-width", "100%")
+    .style("height", "auto");
 
-  const parsePct = s => {
-    if (!s) return NaN;
-    return parseFloat(String(s).replace("%", "").replace("+", ""));
-  };
-
-  // ---------- Load data ----------
-  let stocksRaw, cryptoRaw;
-  try {
-    [stocksRaw, cryptoRaw] = await Promise.all([
-      d3.csv("../stocks.csv"),
-      d3.csv("../cryptocurrency.csv"),
-    ]);
-  } catch (err) {
-    console.error("Error loading CSVs:", err);
-    wrapper.append("div")
-      .style("color", "red")
-      .style("margin-top", "8px")
-      .text("Error loading CSV files. Check console for details.");
-    return;
-  }
-
-  // ---------- Aggregate stocks: average chg_% per normalized name ----------
-  const stockGroups = new Map();
-
-  for (const d of stocksRaw) {
-    const pct = parsePct(d["chg_%"]);
-    if (isNaN(pct)) continue;
-
-    const key = d.name.trim().toLowerCase(); // normalized key
-    const prettyName = d.name.trim();
-
-    const group = stockGroups.get(key) || {
-      category: "Stock",
-      code: prettyName,
-      sum: 0,
-      count: 0,
-    };
-
-    group.sum += pct;
-    group.count += 1;
-    stockGroups.set(key, group);
-  }
-
-  const stocks = [...stockGroups.values()].map(d => {
-    const avg = d.sum / d.count;
-    return {
-      id: "Stock|" + d.code,
-      category: "Stock",
-      code: d.code,
-      avgPct: avg,
-      absAvgPct: Math.abs(avg),
-      count: d.count,
-    };
-  });
-
-  // ---------- Aggregate crypto: average chg_24h per symbol ----------
-  const cryptoGroups = new Map();
-
-  for (const d of cryptoRaw) {
-    const pct = parsePct(d.chg_24h);
-    if (isNaN(pct)) continue;
-
-    const key = d.symbol.trim().toLowerCase();
-    const symbol = d.symbol.trim();
-    const name = d.name;
-
-    const group = cryptoGroups.get(key) || {
-      category: "Crypto",
-      code: symbol,
-      name,
-      sum: 0,
-      count: 0,
-    };
-
-    group.sum += pct;
-    group.count += 1;
-    cryptoGroups.set(key, group);
-  }
-
-  const cryptos = [...cryptoGroups.values()].map(d => {
-    const avg = d.sum / d.count;
-    return {
-      id: "Crypto|" + d.code,
-      category: "Crypto",
-      code: d.code,
-      name: d.name,
-      avgPct: avg,
-      absAvgPct: Math.abs(avg),
-      count: d.count,
-    };
-  });
-
-  if (stocks.length === 0 && cryptos.length === 0) {
-    wrapper.append("div")
-      .style("color", "red")
-      .style("margin-top", "8px")
-      .text("No valid % change values parsed. Check columns chg_% and chg_24h.");
-    return;
-  }
-
-  // ---------- Select top & bottom performers ----------
-  const POS_N = 10; // top gainers
-  const NEG_N = 10; // worst losers
-
-  function pickTopBottom(arr) {
-    const positives = arr
-      .filter(d => d.avgPct > 0)
-      .sort((a, b) => d3.descending(a.avgPct, b.avgPct))
-      .slice(0, POS_N);
-
-    const negatives = arr
-      .filter(d => d.avgPct < 0)
-      .sort((a, b) => d3.ascending(a.avgPct, b.avgPct)) // most negative first
-      .slice(0, NEG_N)
-      .reverse(); // now most negative goes to the BOTTOM of the chart
-
-
-    const map = new Map();
-    positives.concat(negatives).forEach(d => map.set(d.id, d));
-    return [...map.values()];
-  }
-
-  const stocksSel = pickTopBottom(stocks);
-  const cryptosSel = pickTopBottom(cryptos);
-
-  // ---------- Panel heights & SVG ----------
-  const stocksPanelHeight = Math.max(stocksSel.length * 18 + 40, 140);
-  const cryptoPanelHeight = Math.max(cryptosSel.length * 18 + 40, 140);
-
-  const totalHeight =
-    margin.top + stocksPanelHeight +
-    panelGap + cryptoPanelHeight +
-    margin.bottom;
-
-  const svg = wrapper.append("svg")
-    .attr("width", width)
-    .attr("height", totalHeight);
-
-  const innerWidth = width - margin.left - margin.right;
-
-  const categoryColors = {
-    Stock: "#22c55e",
-    Crypto: "#38bdf8",
-  };
-
-  // ---------- STOCK PANEL (own x scale) ----------
-  const gStocks = svg.append("g")
+  const g = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const yStocks = d3.scaleBand()
-    .domain(stocksSel.map(d => d.code))
-    .range([0, stocksPanelHeight])
-    .padding(0.15);
-
-  const stockValues = stocksSel.map(d => d.avgPct);
-  const stockMaxAbs = Math.max(
-    Math.abs(d3.min(stockValues) ?? 0),
-    Math.abs(d3.max(stockValues) ?? 0),
-    0.5 // at least ±0.5%
-  );
-
-  const xStocks = d3.scaleLinear()
-    .domain([-stockMaxAbs, stockMaxAbs])
-    .range([0, innerWidth])
-    .nice();
-
-  const xAxisStocks = gStocks.append("g")
-    .attr("transform", `translate(0,${stocksPanelHeight})`)
-    .call(
-      d3.axisBottom(xStocks)
-        .ticks(7)
-        .tickFormat(d => d + "%")
-    );
-
-  const yAxisStocks = gStocks.append("g")
-    .call(
-      d3.axisLeft(yStocks)
-        .tickSize(0)
-    );
-
-  yAxisStocks.selectAll("text").style("font-size", "11px");
-
-  const zeroLineStocks = gStocks.append("line")
-    .attr("x1", xStocks(0))
-    .attr("x2", xStocks(0))
-    .attr("y1", 0)
-    .attr("y2", stocksPanelHeight)
-    .attr("stroke", "#9ca3af")
-    .attr("stroke-dasharray", "4,2");
-
-  gStocks.append("text")
-    .attr("x", 0)
-    .attr("y", -10)
-    .attr("text-anchor", "start")
-    .style("font-size", "13px")
-    .style("font-weight", "600")
-    .text("Stocks — average % return (top & bottom)");
-
-  gStocks.append("text")
-    .attr("x", innerWidth / 2)
-    .attr("y", stocksPanelHeight + 30)
+  g.append("text")
+    .attr("x", width / 2)
+    .attr("y", -15)
     .attr("text-anchor", "middle")
-    .style("font-size", "11px")
-    .style("fill", "#4b5563")
-    .text("Average % change (stocks)");
+    .style("font-size", "16px")
+    .style("font-weight", "600")
+    .text("Sector Liquidity Treemap: Stocks vs Crypto");
 
-  const stockBars = gStocks.append("g")
-    .selectAll("rect")
-    .data(stocksSel, d => d.id)
-    .enter()
-    .append("rect")
-    .attr("y", d => yStocks(d.code))
-    .attr("height", yStocks.bandwidth())
-    .attr("x", xStocks(0))
-    .attr("width", 0)
-    .style("fill", categoryColors.Stock)
-    .style("opacity", 0.85)
-    .on("mouseenter", (event, d) => {
-      d3.select(event.currentTarget).style("opacity", 1);
-      tooltip
-        .style("opacity", 1)
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 10 + "px")
-        .html(`
-          <div style="font-weight:600;margin-bottom:2px;">
-            ${d.code} (Stock)
-          </div>
-          <div>Average % change: <b>${fmtPct(d.avgPct)}%</b></div>
-        `);
-    })
-    .on("mousemove", (event) => {
-      tooltip
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 10 + "px");
-    })
-    .on("mouseleave", () => {
-      tooltip.style("opacity", 0);
-      stockBars.style("opacity", 0.85);
+  // Yellow + pink colors
+  const typeColor = d3.scaleOrdinal()
+    .domain(["Stocks", "Crypto"])
+    .range(["#ffeb3b", "#ff66cc"]); // yellow, pink
+
+  // legend
+  const legend = g.append("g")
+    .attr("transform", `translate(0, -40)`);
+
+  ["Stocks", "Crypto"].forEach((t, i) => {
+    const row = legend.append("g")
+      .attr("transform", `translate(0, ${i * 18})`);
+
+    row.append("rect")
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("fill", typeColor(t));
+
+    row.append("text")
+      .attr("x", 16)
+      .attr("y", 9)
+      .style("font-size", "11px")
+      .text(t);
+  });
+
+  console.log("Loading CSVs for treemap…");
+
+  Promise.all([
+    d3.csv("stocks_cleaned.csv"),
+    d3.csv("crypto_cleaned.csv"),
+    d3.csv("companies_cleaned.csv")
+  ]).then(([stockRows, cryptoRows, companyRows]) => {
+    console.log("Loaded rows:", {
+      stocks: stockRows.length,
+      cryptos: cryptoRows.length,
+      companies: companyRows.length
     });
 
-  stockBars.transition()
-    .duration(500)
-    .attr("x", d => d.avgPct >= 0 ? xStocks(0) : xStocks(d.avgPct))
-    .attr("width", d => Math.abs(xStocks(d.avgPct) - xStocks(0)));
-
-  // ---------- CRYPTO PANEL (own x scale) ----------
-  const gCrypto = svg.append("g")
-    .attr(
-      "transform",
-      `translate(${margin.left},${margin.top + stocksPanelHeight + panelGap})`
+    // ticker -> sector mapping from companies file
+    const sectorByTicker = new Map(
+      companyRows.map(d => [d["ticker"], d["sector"] || "Unknown"])
     );
 
-  const yCrypto = d3.scaleBand()
-    .domain(cryptosSel.map(d => d.code))
-    .range([0, cryptoPanelHeight])
-    .padding(0.15);
-
-  const cryptoValues = cryptosSel.map(d => d.avgPct);
-  const cryptoMaxAbs = Math.max(
-    Math.abs(d3.min(cryptoValues) ?? 0),
-    Math.abs(d3.max(cryptoValues) ?? 0),
-    1 // at least ±1%
-  );
-
-  const xCrypto = d3.scaleLinear()
-    .domain([-cryptoMaxAbs, cryptoMaxAbs])
-    .range([0, innerWidth])
-    .nice();
-
-  const xAxisCrypto = gCrypto.append("g")
-    .attr("transform", `translate(0,${cryptoPanelHeight})`)
-    .call(
-      d3.axisBottom(xCrypto)
-        .ticks(7)
-        .tickFormat(d => d + "%")
+    // ----- STOCKS: aggregate by sector, keep raw liquidity -----
+    const sectorAgg = d3.rollup(
+      stockRows,
+      rows => {
+        const totalLiquidity = d3.sum(rows, r => +r.vol_ || 0);
+        const avgChange = d3.mean(rows, r => +r["chg_%"] || 0);
+        const count = rows.length;
+        return { totalLiquidity, avgChange, count };
+      },
+      r => sectorByTicker.get(r.symbol) || "Unknown"
     );
 
-  const yAxisCrypto = gCrypto.append("g")
-    .call(
-      d3.axisLeft(yCrypto)
-        .tickSize(0)
+    const stockChildrenRaw = Array.from(sectorAgg, ([sector, stats]) => ({
+      name: sector,
+      type: "Stocks",
+      rawValue: stats.totalLiquidity,   // raw volume
+      avgChange: stats.avgChange,
+      count: stats.count
+    })).filter(d => d.rawValue > 0);
+
+    const stockTotal = d3.sum(stockChildrenRaw, d => d.rawValue) || 1;
+
+    // Normalize so all stock sectors together sum to 1
+    const stockChildren = stockChildrenRaw.map(d => ({
+      ...d,
+      value: d.rawValue / stockTotal
+    }));
+
+    const cryptoAgg = d3.rollup(
+      cryptoRows,
+      rows => {
+        const totalCap = d3.sum(rows, r => parseNumber(r.market_cap));
+        const avgChange = d3.mean(rows, r => +r.chg_7d || 0);
+        const first = rows[0];
+        return {
+          name: first.name,
+          symbol: first.symbol,
+          totalCap,
+          avgChange
+        };
+      },
+      r => r.symbol    // group by coin symbol
     );
 
-  yAxisCrypto.selectAll("text").style("font-size", "11px");
+    const cryptoChildrenRaw = Array.from(cryptoAgg, ([symbol, stats]) => ({
+      name: stats.name || symbol,     // label = coin name
+      symbol,
+      type: "Crypto",
+      rawValue: stats.totalCap,       // raw market cap
+      avgChange: stats.avgChange,
+      count: 1
+    })).filter(d => d.rawValue > 0);
 
-  const zeroLineCrypto = gCrypto.append("line")
-    .attr("x1", xCrypto(0))
-    .attr("x2", xCrypto(0))
-    .attr("y1", 0)
-    .attr("y2", cryptoPanelHeight)
-    .attr("stroke", "#9ca3af")
-    .attr("stroke-dasharray", "4,2");
+    const cryptoTotal = d3.sum(cryptoChildrenRaw, d => d.rawValue) || 1;
 
-  gCrypto.append("text")
-    .attr("x", 0)
-    .attr("y", -10)
-    .attr("text-anchor", "start")
-    .style("font-size", "13px")
-    .style("font-weight", "600")
-    .text("Cryptocurrencies — average % return (top & bottom)");
+    // Normalize so all crypto coins together also sum to 1
+    const cryptoChildren = cryptoChildrenRaw.map(d => ({
+      ...d,
+      value: d.rawValue / cryptoTotal
+    }));
 
-  gCrypto.append("text")
-    .attr("x", innerWidth / 2)
-    .attr("y", cryptoPanelHeight + 30)
-    .attr("text-anchor", "middle")
-    .style("font-size", "11px")
-    .style("fill", "#4b5563")
-    .text("Average % change (crypto)");
 
-  const cryptoBars = gCrypto.append("g")
-    .selectAll("rect")
-    .data(cryptosSel, d => d.id)
-    .enter()
-    .append("rect")
-    .attr("y", d => yCrypto(d.code))
-    .attr("height", yCrypto.bandwidth())
-    .attr("x", xCrypto(0))
-    .attr("width", 0)
-    .style("fill", categoryColors.Crypto)
-    .style("opacity", 0.85)
-    .on("mouseenter", (event, d) => {
-      d3.select(event.currentTarget).style("opacity", 1);
-      tooltip
-        .style("opacity", 1)
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 10 + "px")
-        .html(`
-          <div style="font-weight:600;margin-bottom:2px;">
-            ${d.name ? `${d.name} (${d.code})` : d.code} (Crypto)
-          </div>
-          <div>Average % change: <b>${fmtPct(d.avgPct)}%</b></div>
-        `);
-    })
-    .on("mousemove", (event) => {
-      tooltip
-        .style("left", event.pageX + 10 + "px")
-        .style("top", event.pageY - 10 + "px");
-    })
-    .on("mouseleave", () => {
-      tooltip.style("opacity", 0);
-      cryptoBars.style("opacity", 0.85);
-    });
+    // Build hierarchical data for treemap
+    const treeData = {
+  name: "Assets",
+  children: [
+    { name: "Stocks", type: "Stocks", children: stockChildren },
+    { name: "Crypto", type: "Crypto", children: cryptoChildren }
+  ]
+};
 
-  cryptoBars.transition()
-    .duration(500)
-    .attr("x", d => d.avgPct >= 0 ? xCrypto(0) : xCrypto(d.avgPct))
-    .attr("width", d => Math.abs(xCrypto(d.avgPct) - xCrypto(0)));
-}
+    const root = d3.hierarchy(treeData)
+      .sum(d => d.value || 0)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+    d3.treemap()
+      .size([width, height])
+      .paddingInner(2)
+      .paddingOuter(1)
+      (root);
+
+    const nodes = g.selectAll("g.node")
+      .data(root.leaves())
+      .join("g")
+      .attr("class", "node")
+      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+    nodes.append("rect")
+      .attr("width", d => d.x1 - d.x0)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("fill", d => {
+        // parent of leaf is Stocks or Crypto
+        const topType = d.parent && d.parent.data.type ? d.parent.data.type : "Stocks";
+        return typeColor(topType);
+      })
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.9)
+      .on("mouseover", (event, d) => {
+        const data = d.data;
+        const parentType = d.parent && d.parent.data.type ? d.parent.data.type : "Stocks";
+
+        tooltip
+          .style("opacity", 1)
+          .html(`
+            <strong>${data.name}</strong><br/>
+            Group: ${parentType}<br/>
+            Total Liquidity: ${d3.format(".3s")(data.value)}<br/>
+            Avg Change: ${data.avgChange.toFixed(2)}%<br/>
+            Assets: ${data.count}
+          `);
+      })
+      .on("mousemove", event => {
+        const [x, y] = d3.pointer(event, document.body);
+        tooltip
+          .style("left", (x + 12) + "px")
+          .style("top", (y + 12) + "px");
+      })
+      .on("mouseout", () => {
+        tooltip.style("opacity", 0);
+      });
+
+    // Labels: sector/crypto name, clipped if too small
+    nodes.append("text")
+      .attr("x", 4)
+      .attr("y", 14)
+      .style("font-size", "11px")
+      .style("pointer-events", "none")
+      .text(d => d.data.name)
+      .each(function (d) {
+        const rectWidth = d.x1 - d.x0;
+        if (this.getComputedTextLength() > rectWidth - 6) {
+          d3.select(this).text(""); // hide label if no room
+        }
+      });
+
+  }).catch(err => {
+    console.error("Error in treemap:", err);
+  });
+});
