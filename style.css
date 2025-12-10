@@ -52,6 +52,13 @@ section {
     background-color: #ecf6fc;
 }
 
+.reference {
+    margin-top: 20px;
+    padding: 20px;
+    border-left: 5px solid #8e44ad;
+    background-color: #f4ecf7;
+}
+
 .intro h2, .conclusion h2 {
     font-size: 1.8rem;
     color: #2980b9;
